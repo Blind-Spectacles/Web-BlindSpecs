@@ -1,40 +1,26 @@
-import React, { useRef, useEffect, useState } from "react";
-import Webcam from "react-webcam";
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
-import "@tensorflow/tfjs";
-import { motion } from "framer-motion";
+import React, { useRef } from 'react';
+import Webcam from 'react-webcam';
 
 const WebcamFeed: React.FC = () => {
   const webcamRef = useRef<Webcam>(null);
-  const [detectedObjects, setDetectedObjects] = useState<string[]>([]);
 
-  useEffect(() => {
-    const detectObjects = async () => {
-      const net = await cocoSsd.load();
-      setInterval(async () => {
-        if (
-          webcamRef.current &&
-          webcamRef.current.video &&
-          webcamRef.current.video.readyState === 4
-        ) {
-          const predictions = await net.detect(webcamRef.current.video);
-          setDetectedObjects(predictions.map((p) => p.class));
-        }
-      }, 1000);
-    };
-
-    detectObjects();
-  }, []);
+  // Video constraints can be adjusted based on your needs.
+  const videoConstraints = {
+    width: 1280,
+    height: 720,
+    facingMode: 'user',
+  };
 
   return (
-    <motion.div
-      className="w-full h-full bg-secondary rounded-xl shadow-lg flex items-center justify-center p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-    >
-      <Webcam ref={webcamRef} className="rounded-md w-full h-full" />
-    </motion.div>
+    <div className="w-full h-full flex items-center justify-center">
+      <Webcam
+        audio={false}
+        ref={webcamRef}
+        screenshotFormat="image/jpeg"
+        videoConstraints={videoConstraints}
+        className="w-full h-full object-cover rounded-xl"
+      />
+    </div>
   );
 };
 
