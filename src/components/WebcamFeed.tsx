@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import Webcam from "react-webcam";
-import Logs from "./Logs"; // Importing Logs component
+import Logs from "./Logs"; // Import Logs Component
 
 const SERVER_URL = "http://192.168.241.224:5000/process_frame"; // Backend URL
 
@@ -45,7 +45,7 @@ const WebcamFeed: React.FC = () => {
       console.log("Server Response Data:", data); // Debugging
 
       if (data.detections) {
-        setDetections(data.detections); // Replace old detections with new ones
+        setDetections(data.detections); // Update detections
       }
     } catch (error) {
       console.error("Error sending frame:", error);
@@ -60,6 +60,7 @@ const WebcamFeed: React.FC = () => {
 
   return (
     <div className="relative flex flex-col items-center">
+      {/* Webcam Stream */}
       <Webcam
         audio={false}
         ref={webcamRef}
@@ -68,11 +69,13 @@ const WebcamFeed: React.FC = () => {
         className="rounded-lg"
       />
 
+      {/* Error Message */}
       {errorMessage && (
-        <div className="mt-2 text-red-500">
-          {errorMessage}
-        </div>
+        <div className="mt-2 text-red-500">{errorMessage}</div>
       )}
+
+      {/* Logs Component to Display Detections */}
+      <Logs detectedObjects={detections} />
     </div>
   );
 };

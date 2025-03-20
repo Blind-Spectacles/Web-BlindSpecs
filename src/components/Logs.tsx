@@ -18,18 +18,22 @@ const Logs: React.FC<{ detectedObjects: DetectedObject[] }> = ({ detectedObjects
 
   return (
     <motion.div
-      className="w-full h-full bg-secondary p-4 rounded-lg shadow-md overflow-auto"
+      className="w-full h-full bg-secondary p-4 rounded-lg shadow-md overflow-auto mt-4"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
     >
       <h2 className="text-lg font-semibold text-accent">AI Detection Logs</h2>
       <ul className="mt-2 space-y-2 text-sm">
-        {logs.map((obj, index) => (
-          <li key={index} className="p-2 bg-gray-800 rounded">
-            <strong>{obj.label}</strong> - {obj.sentence} (Distance: {obj.distance}m)
-          </li>
-        ))}
+        {logs.length > 0 ? (
+          logs.map((obj, index) => (
+            <li key={index} className="p-2 bg-gray-800 rounded">
+              <strong>{obj.label}</strong> - {obj.sentence} (Distance: {obj.distance}m)
+            </li>
+          ))
+        ) : (
+          <li className="text-gray-500">No detections yet...</li>
+        )}
       </ul>
     </motion.div>
   );
