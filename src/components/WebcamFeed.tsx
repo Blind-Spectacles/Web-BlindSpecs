@@ -1,45 +1,64 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import Webcam from "react-webcam";
 import Logs from "./Logs";
 
-const SERVER_URL = "http://192.168.207.57:5000/process_frame"; // Backend URL
+const SERVER_URL = "http://127.0.0.1:5000/process_frame"; // Backend URL
 
 const WebcamFeed: React.FC = () => {
   const webcamRef = useRef<Webcam>(null);
-  const [detections, setDetections] = useState<string[]>([]);
+  const [detections, setDetections] = useState<any[]>([]);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Function to capture and send a frame every second
-  const captureAndSendFrame = async () => {
+  // Function to convert base64 to Blob
+  const base64ToBlob = (base64: string) => {
+    const byteCharacters = atob(base64.split(",")[1]);
+    const byteArrays = [];
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteArrays.push(byteCharacters.charCodeAt(i));
+    }
+    return new Blob([new Uint8Array(byteArrays)], { type: "image/jpeg" });
+  };
+
+  // Function to capture and send a frame
+  const captureAndSendFrame = useCallback(async () => {
     if (!webcamRef.current) return;
 
     const imageSrc = webcamRef.current.getScreenshot(); // Capture frame as base64
     if (!imageSrc) return;
 
-    // Convert base64 to Blob
-    const blob = await fetch(imageSrc).then(res => res.blob());
-    const formData = new FormData();
-    formData.append("file", blob, "frame.jpg"); // File must be named 'file' to match FastAPI
-
     try {
-      const response = await fetch(SERVER_URL, {
+      const blob = base64ToBlob(imageSrc);
+
+      const formData = new FormData();
+      formData.append("file", blob, "frame.jpg");
+
+      const res = await fetch(SERVER_URL, {
         method: "POST",
         body: formData,
       });
-      const data = await response.json();
-      if (data.detected_objects) {
-        setDetections(data.detected_objects.map((obj: any) => obj.sentence));
+
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("Server Response Data:", data); // Debugging
+
+      if (data.detections) {
+        setDetections((prev) => [...prev, ...data.detections]); // Append new detections
       }
     } catch (error) {
       console.error("Error sending frame:", error);
+      setErrorMessage("Failed to process frame. Please try again.");
     }
-  };
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
     if (isStreaming) {
-      interval = setInterval(captureAndSendFrame, 1000); // Capture frame every second
+      interval = setInterval(captureAndSendFrame, 1000);
     } else if (interval) {
       clearInterval(interval);
     }
@@ -47,20 +66,18 @@ const WebcamFeed: React.FC = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isStreaming]);
+  }, [isStreaming, captureAndSendFrame]);
 
   return (
     <div className="relative flex flex-col items-center">
-      {/* Webcam Stream */}
       <Webcam
         audio={false}
         ref={webcamRef}
-        screenshotFormat="image/jpeg" // Capture image as JPEG
+        screenshotFormat="image/jpeg"
         videoConstraints={{ width: 640, height: 480, facingMode: "user" }}
         className="rounded-lg"
       />
 
-      {/* Start/Stop Streaming Button */}
       <button
         onClick={() => setIsStreaming(!isStreaming)}
         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
@@ -68,7 +85,12 @@ const WebcamFeed: React.FC = () => {
         {isStreaming ? "Stop Streaming" : "Start Streaming"}
       </button>
 
-      {/* AI Detection Logs */}
+      {errorMessage && (
+        <div className="mt-2 text-red-500">
+          {errorMessage}
+        </div>
+      )}
+
       <div className="mt-4 w-2/3">
         <Logs detectedObjects={detections} />
       </div>

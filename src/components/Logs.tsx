@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-const Logs: React.FC<{ detectedObjects: string[] }> = ({ detectedObjects }) => {
-  const [logs, setLogs] = useState<string[]>([]);
+interface DetectedObject {
+  label: string;
+  distance: number;
+  sentence: string;
+}
+
+const Logs: React.FC<{ detectedObjects: DetectedObject[] }> = ({ detectedObjects }) => {
+  const [logs, setLogs] = useState<DetectedObject[]>([]);
 
   useEffect(() => {
     if (detectedObjects.length > 0) {
-      setLogs((prevLogs) => [...prevLogs, `Detected: ${detectedObjects.join(", ")}`]);
+      setLogs((prevLogs) => [...prevLogs, ...detectedObjects]);
     }
   }, [detectedObjects]);
 
@@ -19,8 +25,10 @@ const Logs: React.FC<{ detectedObjects: string[] }> = ({ detectedObjects }) => {
     >
       <h2 className="text-lg font-semibold text-accent">AI Detection Logs</h2>
       <ul className="mt-2 space-y-2 text-sm">
-        {logs.map((log, index) => (
-          <li key={index} className="p-2 bg-gray-800 rounded">{log}</li>
+        {logs.map((obj, index) => (
+          <li key={index} className="p-2 bg-gray-800 rounded">
+            <strong>{obj.label}</strong> - {obj.sentence} (Distance: {obj.distance}m)
+          </li>
         ))}
       </ul>
     </motion.div>
