@@ -22,19 +22,19 @@ const App: React.FC = () => {
             <div className="h-[60vh] md:h-[65%] rounded-xl backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg p-1 flex items-center justify-center">
               <WebcamFeed />
             </div>
-            {/* <div className="h-[30vh] md:h-[35%] rounded-xl backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg p-3 flex items-center justify-center">
+            <div className="h-[30vh] md:h-[35%] rounded-xl backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg p-3 flex items-center justify-center">
               <StaticText />
-            </div> */}
+            </div>
           </div>
 
           {/* Right Side (Logs + Static Image) */}
           <div className="flex flex-col gap-4 md:col-span-1">
-            {/* <div className="h-[30vh] md:h-[65%] rounded-xl backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg p-3 flex items-center justify-center">
+            <div className="h-[30vh] md:h-[65%] rounded-xl backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg p-3 flex items-center justify-center">
               <Logs detectedObjects={[]} />
-            </div> */}
-            {/* <div className="h-[30vh] md:h-[45%] rounded-xl backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg p-1 flex items-center justify-center">
+            </div>
+            <div className="h-[30vh] md:h-[45%] rounded-xl backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg p-1 flex items-center justify-center">
               <StaticImage src="/images/sample.png" alt="System Feature" />
-            </div> */}
+            </div>
           </div>
 
         </div>

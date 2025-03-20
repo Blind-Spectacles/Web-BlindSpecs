@@ -1,13 +1,12 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import Webcam from "react-webcam";
-import Logs from "./Logs";
+import Logs from "./Logs"; // Importing Logs component
 
-const SERVER_URL = "http://127.0.0.1:5000/process_frame"; // Backend URL
+const SERVER_URL = "http://192.168.241.224:5000/process_frame"; // Backend URL
 
 const WebcamFeed: React.FC = () => {
   const webcamRef = useRef<Webcam>(null);
   const [detections, setDetections] = useState<any[]>([]);
-  const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Function to convert base64 to Blob
@@ -46,7 +45,7 @@ const WebcamFeed: React.FC = () => {
       console.log("Server Response Data:", data); // Debugging
 
       if (data.detections) {
-        setDetections((prev) => [...prev, ...data.detections]); // Append new detections
+        setDetections(data.detections); // Replace old detections with new ones
       }
     } catch (error) {
       console.error("Error sending frame:", error);
@@ -55,18 +54,9 @@ const WebcamFeed: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (isStreaming) {
-      interval = setInterval(captureAndSendFrame, 1000);
-    } else if (interval) {
-      clearInterval(interval);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isStreaming, captureAndSendFrame]);
+    const interval = setInterval(captureAndSendFrame, 1000); // Automatically start streaming
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, [captureAndSendFrame]);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -74,26 +64,15 @@ const WebcamFeed: React.FC = () => {
         audio={false}
         ref={webcamRef}
         screenshotFormat="image/jpeg"
-        videoConstraints={{ width: 640, height: 480, facingMode: "user" }}
+        videoConstraints={{ width: 1080, height: 1080, facingMode: "user" }}
         className="rounded-lg"
       />
-
-      <button
-        onClick={() => setIsStreaming(!isStreaming)}
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        {isStreaming ? "Stop Streaming" : "Start Streaming"}
-      </button>
 
       {errorMessage && (
         <div className="mt-2 text-red-500">
           {errorMessage}
         </div>
       )}
-
-      <div className="mt-4 w-2/3">
-        <Logs detectedObjects={detections} />
-      </div>
     </div>
   );
 };
