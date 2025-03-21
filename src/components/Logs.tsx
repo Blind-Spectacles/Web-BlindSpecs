@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface DetectedObject {
   label: string;
@@ -9,28 +9,32 @@ interface DetectedObject {
 
 const Logs: React.FC<{ detectedObjects: DetectedObject[] }> = ({ detectedObjects }) => {
   const [logs, setLogs] = useState<DetectedObject[]>([]);
-  const [isSpeechEnabled, setIsSpeechEnabled] = useState(false);
+  const [spokenObjects, setSpokenObjects] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (detectedObjects.length > 0) {
-      setLogs((prevLogs) => [...prevLogs, ...detectedObjects]);
+    setLogs((prevLogs) => {
+      const updatedLogs = [...prevLogs];
 
-      // Ensure speech works after user interaction
-      if (isSpeechEnabled) {
-        detectedObjects.forEach((obj) => {
-          if (obj.distance < 2) {
-            speakText(`Warning! ${obj.label} detected at ${obj.distance} meters.`);
-          }
-        });
+      detectedObjects.forEach((newObj) => {
+        const existingObj = updatedLogs.find((obj) => obj.label === newObj.label);
+        if (existingObj) {
+          existingObj.distance = newObj.distance;
+        } else {
+          updatedLogs.unshift(newObj);
+        }
+      });
+
+      return updatedLogs.slice(0, 10); // Keep only the latest 10 logs
+    });
+
+    // Check and speak if objects are within 3 meters
+    detectedObjects.forEach((obj) => {
+      if (obj.distance < 3 && !spokenObjects.has(obj.label)) {
+        speakText(obj.sentence);
+        setSpokenObjects((prevSet) => new Set(prevSet).add(obj.label));
       }
-    }
-  }, [detectedObjects, isSpeechEnabled]);
-
-  // Function to enable speech (user must click once)
-  const enableSpeech = () => {
-    setIsSpeechEnabled(true);
-    speakText("Speech enabled successfully!");
-  };
+    });
+  }, [detectedObjects]);
 
   // Function to convert text to speech
   const speakText = (text: string) => {
@@ -38,11 +42,10 @@ const Logs: React.FC<{ detectedObjects: DetectedObject[] }> = ({ detectedObjects
       const synth = window.speechSynthesis;
       const utterance = new SpeechSynthesisUtterance(text);
 
-      // Set voice to a specific language if available
+      // Set voice to English if available
       const voices = synth.getVoices();
-      utterance.voice = voices.find(v => v.lang === "en-US") || voices[0];
+      utterance.voice = voices.find((v) => v.lang === "en-US") || voices[0];
 
-      // Ensure speech isn't interrupted by previous requests
       synth.cancel();
       synth.speak(utterance);
 
@@ -54,33 +57,27 @@ const Logs: React.FC<{ detectedObjects: DetectedObject[] }> = ({ detectedObjects
 
   return (
     <motion.div
-      className="w-full h-full bg-secondary p-4 rounded-lg shadow-md overflow-auto mt-4"
+      className="w-full h-full bg-secondary p-4 rounded-lg shadow-md overflow-auto"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
     >
       <h2 className="text-lg font-semibold text-accent">AI Detection Logs</h2>
-
-      {/* Button to Enable Speech */}
-      {!isSpeechEnabled && (
-        <button
-          onClick={enableSpeech}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md mt-2"
-        >
-          Enable Speech
-        </button>
-      )}
-
       <ul className="mt-2 space-y-2 text-sm">
-        {logs.length > 0 ? (
-          logs.map((obj, index) => (
-            <li key={index} className="p-2 bg-gray-800 rounded">
-              <strong>{obj.label}</strong> - {obj.sentence} (Distance: {obj.distance}m)
-            </li>
-          ))
-        ) : (
-          <li className="text-gray-500">No detections yet...</li>
-        )}
+        <AnimatePresence>
+          {logs.map((obj, index) => (
+            <motion.li
+              key={index}
+              className="p-2 bg-gray-800 rounded"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+            >
+              <strong>{obj.label}</strong> - {obj.sentence} (Distance: {obj.distance.toFixed(2)}m)
+            </motion.li>
+          ))}
+        </AnimatePresence>
       </ul>
     </motion.div>
   );
